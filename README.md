@@ -1,4 +1,8 @@
-# gemba
+# gemba (Ruby, retired)
+
+> **This project is retired.** Gemba has been rewritten in Crystal — see
+> [jamescook/gemba](https://github.com/jamescook/gemba). This Ruby version
+> is kept around for history but is no longer developed.
 
 A GBA emulator frontend powered by [teek](https://github.com/jamescook/teek) and [libmgba](https://github.com/mgba-emu/mgba).
 
