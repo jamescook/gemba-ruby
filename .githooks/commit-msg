@@ -1,0 +1,41 @@
+#!/bin/sh
+# Block commit messages that embed a bead/tracker id (e.g. teek-mgba-w16.5)
+# or a Co-Authored-By trailer.
+#
+# This repo's own bead prefix (teek-mgba, from before it was renamed to
+# gemba-ruby) doesn't match its directory basename, so the global
+# ~/.git-hooks/commit-msg hook - which derives the expected prefix from
+# `basename $(git rev-parse --show-toplevel)` - can't catch it. This repo
+# sets core.hooksPath to .githooks locally so this hook (with the real
+# prefix hardcoded) runs instead.
+#
+# Beads is internal to the workflow; git history is for humans, and a reader of the
+# log has no access to the tracker — the id is noise, and it leaks the internal
+# process into permanent history. Describe the change instead.
+#
+# Matches the lowercase "teek-mgba-<id>" form this repo's own tracker uses
+# (case-sensitive, so ordinary prose isn't flagged), including a dotted
+# sub-task suffix. Comment lines are ignored. Bypass a genuine false
+# positive with: git commit --no-verify
+
+msg_file="$1"
+
+if grep -qi '^co-authored-by:' "$msg_file"; then
+  echo "commit-msg: message contains a 'Co-Authored-By' trailer -- not allowed." >&2
+  echo "Remove it and commit again." >&2
+  exit 1
+fi
+
+# The real message, minus git's comment/scissor lines.
+body=$(grep -vE '^[[:space:]]*#' "$msg_file")
+
+ids=$(printf '%s\n' "$body" | grep -Eo 'teek-mgba-[a-z0-9]{3}(\.[0-9]+)*([^a-zA-Z]|$)' | sort -u | tr '\n' ' ')
+
+if [ -n "$ids" ]; then
+  echo "commit-msg: this message names a bead id: ${ids}" >&2
+  echo "Keep tracker ids out of git history — say what the change does, not which bead it's for." >&2
+  echo "(Genuine false positive? re-run with: git commit --no-verify)" >&2
+  exit 1
+fi
+
+exit 0
